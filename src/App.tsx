@@ -1,6 +1,6 @@
+import { Mutex } from "async-mutex";
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import { Mutex } from "async-mutex";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -38,10 +38,28 @@ function App() {
     setTimeoutCount(value || 1);
   };
 
+  const postCounter = async (counter: number) => {
+    const res = await fetch("http://localhost:3000/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ counter }),
+    });
+    const data = await res.json();
+    return data.counter;
+  };
+
   const fetchCounter = async () => {
     const res = await fetch("http://localhost:3000");
     const data = await res.json();
-    setFetchCount(data.count);
+    return data.counter;
+  };
+
+  const fetchIncrementCounter = async () => {
+    let counter = await fetchCounter();
+    const newCounter = await postCounter(++counter);
+    setFetchCount(newCounter);
   };
 
   useEffect(() => {
@@ -57,12 +75,12 @@ function App() {
           onClick={async () => {
             setCount((prev) => ++prev);
             await incrementAsync();
-            await fetchCounter();
+            await fetchIncrementCounter();
           }}
         >
           increment timeOut
         </button>
-        <div>async Count: {timeOutCount}</div>
+        <div>TimeOut Count: {timeOutCount}</div>
         <div>Fetch Count {fetchCount}</div>
         <div>Count {count}</div>
       </div>
